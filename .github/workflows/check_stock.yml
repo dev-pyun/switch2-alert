@@ -16,7 +16,9 @@ jobs:
           python-version: "3.12"
 
       - name: 패키지 설치
-        run: pip install requests beautifulsoup4
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
 
       - name: 재고 확인
         env:

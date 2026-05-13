@@ -1,18 +1,10 @@
-import requests
 import os
-from bs4 import BeautifulSoup
+import requests
+from playwright.sync_api import sync_playwright
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 URL = "https://store.nintendo.co.kr/beeskb6aakor"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    )
-}
 
 
 def send_telegram(message: str):
@@ -22,19 +14,14 @@ def send_telegram(message: str):
 
 
 def check():
-    resp = requests.get(URL, headers=HEADERS, timeout=15)
-    resp.raise_for_status()
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(URL, wait_until="networkidle")
+        content = page.content()
+        browser.close()
 
-    keywords = ["품절", "soldOut", "sold-out", "out-of-stock", "SOLD_OUT", "isSoldOut"]
-    print("=== 키워드 탐지 결과 ===")
-    for kw in keywords:
-        found = kw in resp.text
-        print(f"  {kw!r}: {'발견' if found else '없음'}")
-
-    print("\n=== HTML 앞부분 (500자) ===")
-    print(resp.text[:500])
-
-    in_stock = "품절" not in resp.text
+    in_stock = "품절" not in content
     if in_stock:
         send_telegram(
             "🚨 닌텐도 스위치 2 재입고!\n"

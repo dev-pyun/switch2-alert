@@ -24,6 +24,16 @@ def send_telegram(message: str):
 def check():
     resp = requests.get(URL, headers=HEADERS, timeout=15)
     resp.raise_for_status()
+
+    keywords = ["품절", "soldOut", "sold-out", "out-of-stock", "SOLD_OUT", "isSoldOut"]
+    print("=== 키워드 탐지 결과 ===")
+    for kw in keywords:
+        found = kw in resp.text
+        print(f"  {kw!r}: {'발견' if found else '없음'}")
+
+    print("\n=== HTML 앞부분 (500자) ===")
+    print(resp.text[:500])
+
     in_stock = "품절" not in resp.text
     if in_stock:
         send_telegram(
